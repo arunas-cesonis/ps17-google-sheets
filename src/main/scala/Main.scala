@@ -1,4 +1,5 @@
-import googleappscript.{Document, Element, Logger, SpreadsheetApp, UrlFetchApp, XmlService}
+import googleappscript.xml.XmlService
+import googleappscript.{Browser, Document, Element, Logger, SpreadsheetApp, UrlFetchApp}
 
 import java.time.Instant
 import scala.::
@@ -8,78 +9,6 @@ import scala.scalajs.js.URIUtils.encodeURIComponent
 import scala.scalajs.js.annotation.{JSExportTopLevel, JSGlobal}
 
 object Main {
-
-  case class Field(
-    name: String,
-    value: Option[String],
-    format: Option[String],
-    fields: List[Field],
-    attrs: List[(String, String)],
-    path: List[String]
-  ) extends Iterable[Field] {
-    self =>
-    def iterator: Iterator[Field] = fields.iterator
-    def paths: List[List[String]] =
-      path :: iterator.flatMap(_.paths).toList
-    def debug: String = {
-      def go(d: Int, x: Field): List[String] =
-        List(
-          "  ".repeat(d) + x.path.mkString(".") + ": " + x.format
-            .getOrElse("") + " value[" + x.value.map(_.length).getOrElse(-1) + "]=[" + x.value.getOrElse(
-            "null"
-          ) + "] " + x.attrs.map(x => x._1 + "=" + x._2).mkString(", ")
-        ) ++ x.fields.flatMap(go(d + 1, _))
-
-      val lines = go(0, self)
-      lines.mkString("\n")
-    }
-    def toHeader: List[List[String]] = {
-      def go(acc: List[List[String]], f: Field): List[List[String]] =
-        if (f.fields.isEmpty) {
-          acc.appended(f.path)
-        } else {
-          f.fields.foldLeft(acc)(go)
-        }
-      go(Nil, self)
-
-    }
-  }
-
-  object Field {
-    def from(root: Element): Field = {
-      def go(el: Element, path: List[String]): Field = {
-        val attrs   = el.getAttributes()
-        val name    = el.getName()
-        val newPath = path.appended(name)
-        val text    = el.getText()
-        Field(
-          name = name,
-          value = Option.when(text.trim.nonEmpty)(text.trim),
-          format = attrs.find(_.getName() == "format").map(_.getValue()),
-          fields = el.getChildren().map(go(_, newPath)).toList,
-          attrs = attrs.map(x => x.getName() -> x.getValue()).toList,
-          path = newPath
-        )
-      }
-      go(root, Nil)
-    }
-  }
-
-  case class Table(
-    header: List[String],
-    rows: List[List[String]]
-  )
-  object Table {
-    def from(fields: List[Field]): Table = {
-      val header = fields.head.paths.map(_.mkString("."))
-      val t      = Table(header, Nil)
-      t.header.foreach(log1)
-      t
-    }
-  }
-
-  def dump(doc: Document): Unit =
-    log(Field.from(doc.getRootElement()))
 
   @js.native
   @JSGlobal
@@ -120,23 +49,13 @@ object Main {
     resp.getContentText()
   }
 
-  def get(resource: String, params: Map[String, String]): Document = {
+  def get(resource: Resource, params: Map[String, String]): Document = {
     val params2  = Map("ws_key" -> Config.key) ++ params
-    val response = httpGet(Config.host, s"/api/${resource}", params2)
+    val response = httpGet(Config.host, s"/api/${resource.name}", params2)
     time("parse xml") {
       XmlService.parse(response)
     }
   }
-
-  sealed trait RecordValue extends Product with Serializable
-  object RecordValue {
-    case class Multilingual(values: List[(Int, String)])
-    case class String(value: java.lang.String)
-  }
-  case class RecordField(
-    path: List[String],
-    value: RecordValue
-  )
 
   sealed trait Display extends Product with Serializable { self =>
     def toParams: Map[String, String] =
@@ -154,11 +73,9 @@ object Main {
     self =>
     def toParams: Map[String, String] =
       self match {
-        case DateFilter.AllTime           => Map.empty
+        case DateFilter.AllTime => Map.empty
         case DateFilter.Range(start, end) =>
-          //  Map("filter[date_add]" -> "[2023-09-13,2023-09-21]", "date" -> "1")
           Map("filter[date_upd]" -> s"[${start},${end}]", "date" -> "1")
-        // ?filter[date_upd]=[2021-01-01 00:00:00|2021-04-07 00:00:00]&date=1
       }
   }
 
@@ -173,46 +90,143 @@ object Main {
       head.getChildren().map(_.getName())
     }
 
-  def makeTable(header: js.Array[String], records: js.Array[Element]): js.Array[js.Array[js.Any]] = {
-    val table = time("map records") {
+  def makeColumns(resource: Resource, records: js.Array[Element]): Option[js.Array[Column]] =
+    records.headOption.map { head =>
+      head.getChildren().map(_.getName()).map(Column(_, resource, js.Array()))
+    }
+
+  def fillColumns(columns: js.Array[Column], records: js.Array[Element]): Unit =
+    time("fill columns") {
       records.map { el =>
-        header
-          .map { k =>
-            val valueElement = el.getChild(k)
+        columns
+          .foreach { col =>
+            val valueElement = el.getChild(col.name)
             val language     = valueElement.getChildren("language")
-            if (language.length > 0) {
+            val value = if (language.length > 0) {
               language.head.getText()
             } else {
               valueElement.getText()
             }
+            col.data.push(value)
           }
-          .map(js.Any.fromString)
       }
     }
-    table.unshift(header.map(js.Any.fromString))
-    table
-  }
 
-  def fetchResource(resource: String, itemName: String, display: Display, dateFilter: DateFilter): Unit = {
-    val params  = Map("limit" -> "100000") ++ display.toParams ++ dateFilter.toParams
-    val xml     = get(resource, params)
-    val records = time("getChildren")(xml.getRootElement().getChild(resource).getChildren(itemName))
-    makeHeader(records) match {
-      case Some(header) =>
-        val table  = makeTable(header, records)
-        val cursor = SpreadsheetApp.getCurrentCell()
-        val range  = cursor.offset(0, 0, table.length, header.length)
-        range.setValues(table)
-      case None =>
-        val cursor = SpreadsheetApp.getCurrentCell()
-        cursor.setValues(js.Array(js.Array(js.Any.fromString("server sent 0 rows"))))
+  case class Resource(name: String) extends AnyVal
+  case class Column(name: String, resource: Resource, data: js.Array[js.Any]) { self =>
+    def toQualifiedName: String = s"${resource.name}.${name}"
+  }
+  case class Table(columns: js.Array[Column]) { self =>
+    def debug: String =
+      columns
+        .map { col =>
+          List(col.resource.name, col.name, col.data.take(10).map(_.toString).mkString("[", ", ", "]")).mkString(" ")
+        }
+        .mkString("\n")
+    def toValues: js.Array[js.Array[js.Any]] = {
+      val header = columns.map(_.toQualifiedName).map(js.Any.fromString)
+      val values = js.Array(header)
+      val n      = self.numRows
+      for (i <- 0 until n)
+        values.push(columns.map(_.data(i)))
+      values
+    }
+    def numRows: Int = columns.head.data.length
+    def toStringLists: List[List[String]] =
+      toValues.map(_.toList.map(_.toString)).toList
+
+    def toDocument: Document = {
+      val doc = XmlService.createDocument()
+      // XmlService.createElement()
+      // doc.crea
+      doc
+
     }
   }
 
-  @JSExportTopLevel("deploy_getAllProducts")
-  def getAllProducts(): Unit =
-    fetchResource(
-      "products",
+  def anyToString(x: js.Any): String = {
+    val t = js.typeOf(x)
+    if (t == "string") {
+      x.toString
+    } else {
+      throw new RuntimeException(s"expected string, got '${t}''")
+    }
+  }
+
+  object Table {
+
+    def from(values: js.Array[js.Array[js.Any]]): Table = {
+      val columns = values.head.map(anyToString).map { name =>
+        name.split('.') match {
+          case Array(resource, name) =>
+            Column(name, Resource(resource), js.Array())
+          case _ =>
+            Column(name, Resource(""), js.Array())
+        }
+      }
+      val n = columns.length
+      values.tail.foreach { row =>
+        for (i <- 0 until n)
+          columns(i).data.push(row(i))
+      }
+      Table(columns)
+    }
+
+    def from(resource: Resource, itemName: String, xml: Document): Option[Table] = {
+      val records = time("getChildren")(xml.getRootElement().getChild(resource.name).getChildren(itemName))
+      makeColumns(resource, records) match {
+        case Some(columns) =>
+          fillColumns(columns, records)
+          Some(Table(columns))
+        case None =>
+          Browser.msgBox("Empty response")
+          None
+      }
+    }
+
+    def fetchResource(resource: Resource, itemName: String, display: Display, dateFilter: DateFilter): Option[Table] = {
+      val params = Map("limit" -> "100000") ++ display.toParams ++ dateFilter.toParams
+      val xml    = get(resource, params)
+      from(resource, itemName, xml)
+    }
+  }
+
+  def writeTableAtCurrentCell(t: Table): Unit = {
+    val values = t.toValues
+    val cursor = SpreadsheetApp.getCurrentCell()
+    val range  = cursor.offset(0, 0, values.length, t.columns.length)
+    range.setValues(values)
+    range.setShowHyperlink(false)
+    range.getSheet().setActiveSelection(range)
+  }
+
+  def readTableFromSelection(): Option[Table] =
+    SpreadsheetApp.getActiveSheet().getSelection().getActiveRange().toOption.map { range =>
+      Table.from(range.getValues())
+    }
+
+  def fetchToCurrentCell(resource: Resource, itemName: String, display: Display, dateFilter: DateFilter): Unit =
+    Table.fetchResource(resource, itemName, display, dateFilter) match {
+      case Some(t) =>
+        writeTableAtCurrentCell(t)
+
+      // val out = readTableFromSelection().get
+      // val tbl = out.toStringLists
+      //  .zip(t.toStringLists)
+      //  .map { case (a, b) =>
+      //    a.zip(b).map { case (x, y) => (x == y).toString }
+      //  }
+      //  .map(x => js.Array(x.toSeq: _*).map(js.Any.fromString))
+      // val blam = js.Array(tbl.toSeq: _*)
+      // writeTableAtCurrentCell(Table.from(blam))
+      case None =>
+        Browser.msgBox("Empty response")
+    }
+
+  @JSExportTopLevel("deploy_getProducts")
+  def getProducts(): Unit =
+    fetchToCurrentCell(
+      Resource("products"),
       "product",
       Display.Fields(List("id", "name", "price", "wholesale_price")),
       DateFilter.AllTime
@@ -220,7 +234,7 @@ object Main {
 
   @JSExportTopLevel("deploy_getStockAvailables")
   def getStockAvailables(): Unit =
-    fetchResource("stock_availables", "stock_available", Display.Full, DateFilter.AllTime)
+    fetchToCurrentCell(Resource("stock_availables"), "stock_available", Display.Full, DateFilter.AllTime)
 
   def formatDate(d: js.Date): String =
     f"${d.getFullYear().toInt}%04d-${d.getMonth().toInt + 1}%02d-${d.getDate().toInt}%02d"
@@ -231,7 +245,40 @@ object Main {
     val end   = new js.Date().valueOf() + (86400.0 * 1000.0 * 1.0)
     val s     = new js.Date(start)
     val e     = new js.Date(end)
-    fetchResource("orders", "order", Display.Full, DateFilter.Range(formatDate(s), formatDate(e)))
+    fetchToCurrentCell(Resource("orders"), "order", Display.Full, DateFilter.Range(formatDate(s), formatDate(e)))
+  }
+
+  def trimColumnValues(values: js.Array[js.Any]): js.Array[js.Any] =
+    values.dropWhile(_.toString.isEmpty).takeWhile(_.toString.nonEmpty)
+
+  def intersectVertically(ranges: js.Array[googleappscript.Range]): js.Array[googleappscript.Range] = {
+    val (bottom, top) = ranges.toList.foldLeft((Int.MaxValue, Int.MinValue)) { case ((min, max), range) =>
+      val top    = range.getRow()
+      val bottom = top + range.getHeight()
+      (min.min(bottom), max.max(top))
+    }
+    log(ranges)
+    log(bottom, top)
+    ranges.map { r =>
+      r.getSheet().getRange(top, r.getColumn(), bottom - top, r.getWidth())
+    }
+  }
+
+  def offsetToTop(range: googleappscript.Range): googleappscript.Range =
+    range.offset(1 - range.getRow(), 0, range.getRow() + range.getHeight() - 1, range.getWidth())
+
+  @JSExportTopLevel("deploy_tableFromSelection")
+  def tableFromSelection(): Unit = {
+    val sheet = SpreadsheetApp.getActiveSheet()
+    val range = SpreadsheetApp.getActiveSheet().getActiveRange().toOption.get
+    val table = Table.from(range.getValues())
+    assert(table.columns.map(_.resource.name).distinct.length == 1)
+    assert(table.columns.map(_.resource.name).distinct.head.nonEmpty)
+
+    // SpreadsheetApp.getActiveSheet().setActiveSelection(tmp)
+    // val ranges = sheet.getActiveRangeList().toOption.map(_.getRanges().toList).toList.flatten
+    // val sameHeightRanges = intersectVertically(js.Array(ranges:_*))
+    // log(sameHeightRanges.map(_.getA1Notation()))
   }
 
   @JSExportTopLevel("deploy_onOpen")
@@ -240,9 +287,10 @@ object Main {
     val ui = SpreadsheetApp.getUi
 
     ui.createMenu("PS17")
-      .addItem("Get all products", "getAllProducts")
+      .addItem("Get products", "getProducts")
       .addItem("Get stock availability", "getStockAvailables")
       .addItem("Get recent orders", "getOrders")
+      .addItem("Table from selection", "tableFromSelection")
       .addToUi()
   }
 

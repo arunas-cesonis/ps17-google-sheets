@@ -1,5 +1,5 @@
 import scala.scalajs.js
-import scala.scalajs.js.annotation.{JSGlobal, JSGlobalScope}
+import scala.scalajs.js.annotation.JSGlobal
 
 object googleappscript {
 
@@ -27,12 +27,92 @@ object googleappscript {
     def fetch(url: String, options: URLFetchRequestOptions): HTTPResponse = js.native
   }
 
+  @js.native
+  @JSGlobal
+  object Browser extends js.Object {
+    def msgBox(prompt: String): String = js.native;
+  }
+
   trait Attribute extends js.Object {
     def getName(): String;
     def getValue(): String;
     def setName(name: String): Attribute;
     def setValue(value: String): Attribute;
   }
+
+  object xml {
+
+    trait Format extends js.Object  {
+      def format(document: Document): String;
+      def format(element: Element): String;
+      def setEncoding(encoding: String): Format;
+      def setIndent(indent: String): Format;
+      def setLineSeparator(separator: String): Format;
+      def setOmitDeclaration(omitDeclaration: Boolean): Format;
+      def setOmitEncoding(omitEncoding: Boolean): Format;
+    }
+    trait XmlService extends js.Object {
+      def createCdata(text: String): Cdata;
+      def createComment(text: String): Comment;
+      def createDocument(): Document;
+      def createDocument(rootElement: Element): Document;
+      def createElement(name: String): Element;
+      def createText(text: String): Text;
+      def getCompactFormat(): Format;
+      def getPrettyFormat(): Format;
+      def getRawFormat(): Format;
+      def parse(xml: String): Document;
+    }
+
+    trait Content extends  js.Object  {
+      def asCdata(): Cdata;
+      def asComment(): Comment;
+      //def asDocType(): DocType;
+      def asElement(): Element;
+      //def asEntityRef(): EntityRef;
+      //def asProcessingInstruction(): ProcessingInstruction;
+      def asText(): Text;
+      def detach(): Content;
+      def getParentElement(): Element;
+      //def getType(): ContentType;
+      def getValue(): String;
+    }
+
+    trait Text extends Content {
+      def append(text: String): Text;
+      def detach(): Content;
+      def getParentElement(): Element;
+      def getText(): String;
+      def getValue(): String;
+      def setText(text: String): Text;
+    }
+
+    /**
+     * A representation of an XML Comment node.
+     */
+    trait Comment extends Content {
+      def detach(): Content;
+      def getParentElement(): Element;
+      def getText(): String;
+      def getValue(): String;
+      def setText(text: String): Comment;
+    }
+
+    trait Cdata extends js.Object {
+      def append(text: String): Text;
+      def detach(): Content;
+      def getParentElement(): Element;
+      def getText(): String;
+      def getValue(): String;
+      def setText(text: String): Text;
+    }
+
+    @js.native
+    @JSGlobal
+    val XmlService: XmlService = js.native
+  }
+
+
 
   trait Element extends js.Object {
     def getAttribute(name: String): Attribute;
@@ -62,9 +142,6 @@ object googleappscript {
     def getRootElement(): Element;
   }
 
-  trait XmlService extends js.Object {
-    def parse(text: String): Document;
-  }
 
   @js.native
   trait Menu extends js.Object {
@@ -77,63 +154,78 @@ object googleappscript {
     def createMenu(title: String): Menu
   }
 
-
-  @js.native
-  @JSGlobal
-  val XmlService: XmlService = js.native
-
   @js.native
   @JSGlobal
   object SpreadsheetApp extends js.Object {
-    //def AutoFillSeries: typeof AutoFillSeries;
-    //def BandingTheme: typeof BandingTheme;
-    //def BooleanCriteria: typeof BooleanCriteria;
-    //def BorderStyle: typeof BorderStyle;
-    //def ColorType: typeof Base
-    //def CopyPasteType: typeof CopyPasteType;
-    //def DataExecutionErrorCode: typeof DataExecutionErrorCode;
-    //def DataExecutionState: typeof DataExecutionState;
-    //def DataSourceParameterType: typeof DataSourceParameterType;
-    //def DataSourceType: typeof DataSourceType;
-    //def DataValidationCriteria: typeof DataValidationCriteria;
-    //def DeveloperMetadataLocationType: typeof DeveloperMetadataLocationType;
-    //def DeveloperMetadataVisibility: typeof DeveloperMetadataVisibility;
-    //def Dimension: typeof Dimension;
-    //def Direction: typeof Direction;
-    //def GroupControlTogglePosition: typeof GroupControlTogglePosition;
-    //def InterpolationType: typeof InterpolationType;
-    //def PivotTableSummarizeFunction: typeof PivotTableSummarizeFunction;
-    //def PivotValueDisplayType: typeof PivotValueDisplayType;
-    //def ProtectionType: typeof ProtectionType;
-    //def RecalculationInterval: typeof RecalculationInterval;
-    //def RelativeDate: typeof RelativeDate;
-    //def SheetType: typeof SheetType;
-    //def TextDirection: typeof TextDirection;
-    //def TextToColumnsDelimiter: typeof TextToColumnsDelimiter;
-    //def ThemeColorType: typeof ThemeColorType;
-    //def WrapStrategy: typeof WrapStrategy;
-    def create(name: String): Spreadsheet=js.native
-    def create(name: String, rows: Integer, columns: Integer): Spreadsheet=js.native
-    def enableAllDataSourcesExecution(): Unit=js.native
-    def enableBigQueryExecution(): Unit=js.native
-    def flush(): Unit=js.native
-    def getActive(): Spreadsheet=js.native
-    def getActiveRange(): Range=js.native
-    def getActiveSheet(): Sheet=js.native
-    def getActiveSpreadsheet(): Spreadsheet=js.native
-    def getCurrentCell(): Range=js.native
-    def getSelection(): Selection=js.native
-    def getUi(): Ui=js.native
-    def openById(id: String): Spreadsheet=js.native
-    def openByUrl(url: String): Spreadsheet=js.native
-    def setActiveRange(range: Range): Range=js.native
-    def setActiveSheet(sheet: Sheet): Sheet=js.native
-    def setActiveSheet(sheet: Sheet, restoreSelection: Boolean): Sheet=js.native
-    def setActiveSpreadsheet(newActiveSpreadsheet: Spreadsheet): Unit=js.native
-    def setCurrentCell(cell: Range): Range=js.native
+    // def AutoFillSeries: typeof AutoFillSeries;
+    // def BandingTheme: typeof BandingTheme;
+    // def BooleanCriteria: typeof BooleanCriteria;
+    // def BorderStyle: typeof BorderStyle;
+    // def ColorType: typeof Base
+    // def CopyPasteType: typeof CopyPasteType;
+    // def DataExecutionErrorCode: typeof DataExecutionErrorCode;
+    // def DataExecutionState: typeof DataExecutionState;
+    // def DataSourceParameterType: typeof DataSourceParameterType;
+    // def DataSourceType: typeof DataSourceType;
+    // def DataValidationCriteria: typeof DataValidationCriteria;
+    // def DeveloperMetadataLocationType: typeof DeveloperMetadataLocationType;
+    // def DeveloperMetadataVisibility: typeof DeveloperMetadataVisibility;
+    // def Dimension: typeof Dimension;
+    // def Direction: typeof Direction;
+    // def GroupControlTogglePosition: typeof GroupControlTogglePosition;
+    // def InterpolationType: typeof InterpolationType;
+    // def PivotTableSummarizeFunction: typeof PivotTableSummarizeFunction;
+    // def PivotValueDisplayType: typeof PivotValueDisplayType;
+    // def ProtectionType: typeof ProtectionType;
+    // def RecalculationInterval: typeof RecalculationInterval;
+    // def RelativeDate: typeof RelativeDate;
+    // def SheetType: typeof SheetType;
+    // def TextDirection: typeof TextDirection;
+    // def TextToColumnsDelimiter: typeof TextToColumnsDelimiter;
+    // def ThemeColorType: typeof ThemeColorType;
+    // def WrapStrategy: typeof WrapStrategy;
+    def create(name: String): Spreadsheet                                  = js.native
+    def create(name: String, rows: Integer, columns: Integer): Spreadsheet = js.native
+    def enableAllDataSourcesExecution(): Unit                              = js.native
+    def enableBigQueryExecution(): Unit                                    = js.native
+    def flush(): Unit                                                      = js.native
+    def getActive(): Spreadsheet                                           = js.native
+    def getActiveRange(): Range                                            = js.native
+    def getActiveSheet(): Sheet                                            = js.native
+    def getActiveSpreadsheet(): Spreadsheet                                = js.native
+    def getCurrentCell(): Range                                            = js.native
+    def getSelection(): Selection                                          = js.native
+    def getUi(): Ui                                                        = js.native
+    def openById(id: String): Spreadsheet                                  = js.native
+    def openByUrl(url: String): Spreadsheet                                = js.native
+    def setActiveRange(range: Range): Range                                = js.native
+    def setActiveSheet(sheet: Sheet): Sheet                                = js.native
+    def setActiveSheet(sheet: Sheet, restoreSelection: Boolean): Sheet     = js.native
+    def setActiveSpreadsheet(newActiveSpreadsheet: Spreadsheet): Unit      = js.native
+    def setCurrentCell(cell: Range): Range                                 = js.native
   }
 
-  trait Range extends js.Object  {
+  trait RangeList extends js.Object {
+    def activate(): RangeList;
+    def breakApart(): RangeList;
+    def check(): RangeList;
+    def clear(): RangeList;
+    def clearContent(): RangeList;
+    def clearDataValidations(): RangeList;
+    def clearFormat(): RangeList;
+    def clearNote(): RangeList;
+    def getRanges(): js.Array[Range];
+    def insertCheckboxes(): RangeList;
+    def removeCheckboxes(): RangeList;
+    def setBackgroundRGB(red: Integer, green: Integer, blue: Integer): RangeList;
+    def setValue(value: js.Any): RangeList;
+    def setVerticalText(isVertical: Boolean): RangeList;
+    def setWrap(isWrapEnabled: Boolean): RangeList;
+    def trimWhitespace(): RangeList;
+    def uncheck(): RangeList;
+  }
+
+  trait Range extends js.Object {
     def activate(): Range;
     def activateAsCurrentCell(): Range;
     def addDeveloperMetadata(key: String): Range;
@@ -189,6 +281,7 @@ object googleappscript {
     def offset(rowOffset: Integer, columnOffset: Integer, numRows: Integer): Range;
     def offset(rowOffset: Integer, columnOffset: Integer, numRows: Integer, numColumns: Integer): Range;
     def setValues(values: js.Array[js.Array[js.Any]]): Range;
+    def getValues(): js.Array[js.Array[js.Any]];
     def randomize(): Range;
     def removeCheckboxes(): Range;
     def removeDuplicates(): Range;
@@ -209,7 +302,7 @@ object googleappscript {
     def uncheck(): Range;
   }
 
-  trait Spreadsheet extends js.Object  {
+  trait Spreadsheet extends js.Object {
     def addDeveloperMetadata(key: String): Spreadsheet;
     def addDeveloperMetadata(key: String, value: String): Spreadsheet;
     def addEditor(emailAddress: String): Spreadsheet;
@@ -242,7 +335,12 @@ object googleappscript {
     def getSheetByName(name: String): js.UndefOr[Sheet];
     def getSheetId(): Integer;
     def getSheetName(): String;
-    def getSheetValues(startRow: Integer, startColumn: Integer, numRows: Integer, numColumns: Integer): js.Array[js.Array[js.Any]];
+    def getSheetValues(
+      startRow: Integer,
+      startColumn: Integer,
+      numRows: Integer,
+      numColumns: Integer
+    ): js.Array[js.Array[js.Any]];
     def getSpreadsheetTimeZone(): String;
     def getUrl(): String;
     def hideColumn(column: Range): Unit;
@@ -299,6 +397,9 @@ object googleappscript {
   }
 
   trait Sheet extends js.Object {
+    def getActiveRangeList(): js.UndefOr[RangeList];
+    def getRangeList(a1Notations: js.Array[String]): RangeList;
+    def setActiveRangeList(rangeList: RangeList): RangeList;
     def activate(): Sheet;
     def addDeveloperMetadata(key: String): Sheet;
     def addDeveloperMetadata(key: String, value: String): Sheet;
@@ -346,7 +447,12 @@ object googleappscript {
     def getSelection(): Selection;
     def getSheetId(): Integer;
     def getSheetName(): String;
-    def getSheetValues(startRow: Integer, startColumn: Integer, numRows: Integer, numColumns: Integer): js.Array[js.Array[js.Any]];
+    def getSheetValues(
+      startRow: Integer,
+      startColumn: Integer,
+      numRows: Integer,
+      numColumns: Integer
+    ): js.Array[js.Array[js.Any]];
     def hasHiddenGridlines(): Boolean;
     def hideColumn(column: Range): Unit;
     def hideColumns(columnIndex: Integer): Unit;
