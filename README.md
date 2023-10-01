@@ -1,0 +1,1 @@
+Prestashop 1.7 WebService client / data editor based on Google Sheets
