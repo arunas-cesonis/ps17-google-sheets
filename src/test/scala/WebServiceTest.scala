@@ -2,7 +2,7 @@ import cats.implicits.toTraverseOps
 import mypkg.{Config, Http, Params, Resource, Result, Schema, Xml}
 import mypkg.Http.Method
 import mypkg.Result.Result
-import mypkg.Xml.Document
+import mypkg.Xml.{Cdata, Document, Element}
 import utest.{test, TestSuite, Tests}
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
@@ -53,13 +53,22 @@ object WebServiceTest extends TestSuite {
       Document(item)
     }
 
-    def valuesToXml(schema: Schema, values: js.Array[js.Array[js.Any]]): Document =
-
+    def valuesToXml(schema: Schema, values: js.Array[js.Array[js.Any]]): Document = {
+      val content: js.Array[Xml.Content] = values.map { row =>
+        val item = Element.create(schema.itemName)
+        schema.fields.zip(row).foreach { case (field, value) =>
+          val el = Element.create(field.name)
+          el.content.push(Cdata(value.toString))
+          item.content.push(el)
+        }
+        item
+      }
+      val root = Element.create(schema.resourceName).copy(content = content)
+      Document(root)
     }
 
-    def resourceResponseToValues(schema: Schema, doc: Document): js.Array[js.Array[js.Any]] = {
+    def xmlToValues(schema: Schema, doc: Document): js.Array[js.Array[js.Any]] = {
       val fields = schema.getWritableFieldsWithId
-      val doc2   = replaceRootWithSingleChild(doc)
       def findAndRemove[A](a: A, s: List[A]): Option[(A, List[A])] = {
         @tailrec
         def go(acc: List[A], rem: List[A]): Option[(A, List[A])] =
@@ -94,9 +103,9 @@ object WebServiceTest extends TestSuite {
       for {
         schema <- fetchResourceSchema(resource)
         doc    <- fetchResource(resource)
-        values = resourceResponseToValues(schema, doc)
-        _      = println(resource, values.map(_.length).sum)
-        // doc2 <- sendResource(resource, sendable)
+        values = xmlToValues(schema, doc)
+        doc2   = valuesToXml(schema, values)
+        _ <- sendResource(resource, doc2)
       } yield ()
 
     def getAvailableResources: Result[List[String]] = {

@@ -77,7 +77,6 @@ object Xml {
   }
   object Element {
     def create(name: String): Element = Element(name, js.Array(), js.Array())
-
   }
   object Content {
 

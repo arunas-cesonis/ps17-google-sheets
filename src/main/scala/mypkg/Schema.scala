@@ -4,7 +4,7 @@ import mypkg.Result.{ensuring, partialOr, Result}
 import mypkg.Schema.Field
 import mypkg.Xml.{Document, Element}
 
-case class Schema(fields: List[Field]) {
+case class Schema(resourceName: String, itemName: String, fields: List[Field]) {
   def getWritableFieldsWithId: List[Field] =
     fields.filter(f => f.name == "id" || !f.readOnly)
 }
@@ -33,7 +33,7 @@ object Schema {
             format <- item.getAttribute("format")
           } yield Field(item.name, readOnly = readOnly, format = format)
         }
-    } yield Schema(List(Field.id).appendedAll(fields))
+    } yield Schema(items.name, items.children.head.name, List(Field.id).appendedAll(fields))
 
   def from(resource: Resource, doc: Document): Result[Schema] =
     for {
@@ -52,5 +52,5 @@ object Schema {
             format <- item.getAttribute("format")
           } yield Field(item.name, readOnly = readOnly, format = format)
         }
-    } yield Schema(List(Field.id).appendedAll(fields))
+    } yield Schema(items.name, items.children.head.name,  List(Field.id).appendedAll(fields))
 }
