@@ -1,5 +1,5 @@
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSGlobal
+import scala.scalajs.js.annotation.{JSBracketAccess, JSGlobal}
 
 object googleappscript {
 
@@ -10,14 +10,26 @@ object googleappscript {
   }
 
   trait URLFetchRequestOptions extends js.Object {
-    def method: js.UndefOr[String]
+    val method: js.UndefOr[String] = js.undefined
+    val payload: js.UndefOr[String] = js.undefined
+    val contentType: js.UndefOr[String] = js.undefined
+    val muteHttpExceptions: js.UndefOr[Boolean] = js.undefined
   }
 
   trait HTTPResponse extends js.Object {
     def getContentText(): String;
     def getContentText(charset: String): String;
     def getHeaders(): js.Object
-    def getResponseCode(): Int;
+    def getResponseCode(): Integer;
+  }
+
+  @js.native
+  trait HttpHeaders extends js.Object {
+    @JSBracketAccess
+    def apply(key: String): String = js.native
+
+    @JSBracketAccess
+    def update(key: String, v: String): Unit = js.native
   }
 
   @js.native
@@ -42,7 +54,7 @@ object googleappscript {
 
   object xml {
 
-    trait Format extends js.Object  {
+    trait Format extends js.Object {
       def format(document: Document): String;
       def format(element: Element): String;
       def setEncoding(encoding: String): Format;
@@ -64,17 +76,17 @@ object googleappscript {
       def parse(xml: String): Document;
     }
 
-    trait Content extends  js.Object  {
+    trait Content extends js.Object {
       def asCdata(): Cdata;
       def asComment(): Comment;
-      //def asDocType(): DocType;
+      // def asDocType(): DocType;
       def asElement(): Element;
-      //def asEntityRef(): EntityRef;
-      //def asProcessingInstruction(): ProcessingInstruction;
+      // def asEntityRef(): EntityRef;
+      // def asProcessingInstruction(): ProcessingInstruction;
       def asText(): Text;
       def detach(): Content;
       def getParentElement(): Element;
-      //def getType(): ContentType;
+      // def getType(): ContentType;
       def getValue(): String;
     }
 
@@ -88,8 +100,8 @@ object googleappscript {
     }
 
     /**
-     * A representation of an XML Comment node.
-     */
+      * A representation of an XML Comment node.
+      */
     trait Comment extends Content {
       def detach(): Content;
       def getParentElement(): Element;
@@ -98,7 +110,7 @@ object googleappscript {
       def setText(text: String): Comment;
     }
 
-    trait Cdata extends js.Object {
+    trait Cdata extends Content {
       def append(text: String): Text;
       def detach(): Content;
       def getParentElement(): Element;
@@ -107,41 +119,61 @@ object googleappscript {
       def setText(text: String): Text;
     }
 
+    trait Document extends js.Object {
+      def addContent(content: Content): Document;
+      def addContent(index: Integer, content: Content): Document;
+      def cloneContent(): js.Array[Content];
+      def detachRootElement(): Element;
+      def getAllContent(): js.Array[Content];
+      def getContent(index: Integer): Content;
+      def getContentSize(): Integer;
+      def getDescendants(): js.Array[Content];
+      def getRootElement(): Element;
+      def hasRootElement(): Boolean;
+      def removeContent(): js.Array[Content];
+      def removeContent(content: Content): Boolean;
+      def removeContent(index: Integer): Content;
+      def setRootElement(element: Element): Document;
+    }
+
+    trait Element extends Content {
+      def addContent(content: Content): Element;
+      def addContent(index: Integer, content: Content): Element;
+      def cloneContent(): js.Array[Content];
+      def detach(): Content;
+      def getAllContent(): js.Array[Content];
+      def getAttribute(name: String): Attribute;
+      def getAttributes(): js.Array[Attribute];
+      def getChild(name: String): Element;
+      def getChildText(name: String): String;
+      def getChildren(): js.Array[Element];
+      def getChildren(name: String): js.Array[Element];
+      def getContent(index: Integer): Content;
+      def getContentSize(): Integer;
+      def getDescendants(): js.Array[Content];
+      def getDocument(): Document;
+      def getName(): String;
+      def getParentElement(): Element;
+      def getQualifiedName(): String;
+      def getText(): String;
+      def getValue(): String;
+      def isAncestorOf(other: Element): Boolean;
+      def isRootElement(): Boolean;
+      def removeAttribute(attribute: Attribute): Boolean;
+      def removeAttribute(attributeName: String): Boolean;
+      def removeContent(): js.Array[Content];
+      def removeContent(content: Content): Boolean;
+      def removeContent(index: Integer): Content;
+      def setAttribute(attribute: Attribute): Element;
+      def setAttribute(name: String, value: String): Element;
+      def setName(name: String): Element;
+      def setText(text: String): Element;
+    }
+
     @js.native
     @JSGlobal
     val XmlService: XmlService = js.native
   }
-
-
-
-  trait Element extends js.Object {
-    def getAttribute(name: String): Attribute;
-    def getAttributes(): js.Array[Attribute];
-    def getChild(name: String): Element;
-    def getChildText(name: String): String;
-    def getChildren(): js.Array[Element];
-    def getChildren(name: String): js.Array[Element];
-    def getContentSize(): Integer;
-    def getDocument(): Document;
-    def getName(): String;
-    def getParentElement(): Element;
-    def getQualifiedName(): String;
-    def getText(): String;
-    def getValue(): String;
-    def isAncestorOf(other: Element): Boolean;
-    def isRootElement(): Boolean;
-    def removeAttribute(attribute: Attribute): Boolean;
-    def removeAttribute(attributeName: String): Boolean;
-    def setAttribute(attribute: Attribute): Element;
-    def setAttribute(name: String, value: String): Element;
-    def setName(name: String): Element;
-    def setText(text: String): Element;
-  }
-
-  trait Document extends js.Object {
-    def getRootElement(): Element;
-  }
-
 
   @js.native
   trait Menu extends js.Object {
