@@ -40,7 +40,6 @@ build/
 .clasprc.json
 .idea
 clasp
-deploy.sh
 node_modules/
 package*.json
 .bsp

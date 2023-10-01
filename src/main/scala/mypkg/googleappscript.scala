@@ -1,5 +1,8 @@
+package mypkg
+
 import scala.scalajs.js
 import scala.scalajs.js.annotation.{JSBracketAccess, JSGlobal}
+import scala.scalajs.js.|
 
 object googleappscript {
 
@@ -10,9 +13,9 @@ object googleappscript {
   }
 
   trait URLFetchRequestOptions extends js.Object {
-    val method: js.UndefOr[String] = js.undefined
-    val payload: js.UndefOr[String] = js.undefined
-    val contentType: js.UndefOr[String] = js.undefined
+    val method: js.UndefOr[String]              = js.undefined
+    val payload: js.UndefOr[String]             = js.undefined
+    val contentType: js.UndefOr[String]         = js.undefined
     val muteHttpExceptions: js.UndefOr[Boolean] = js.undefined
   }
 
@@ -52,128 +55,128 @@ object googleappscript {
     def setValue(value: String): Attribute;
   }
 
-  object xml {
+  // object xml {
 
-    trait Format extends js.Object {
-      def format(document: Document): String;
-      def format(element: Element): String;
-      def setEncoding(encoding: String): Format;
-      def setIndent(indent: String): Format;
-      def setLineSeparator(separator: String): Format;
-      def setOmitDeclaration(omitDeclaration: Boolean): Format;
-      def setOmitEncoding(omitEncoding: Boolean): Format;
-    }
-    trait XmlService extends js.Object {
-      def createCdata(text: String): Cdata;
-      def createComment(text: String): Comment;
-      def createDocument(): Document;
-      def createDocument(rootElement: Element): Document;
-      def createElement(name: String): Element;
-      def createText(text: String): Text;
-      def getCompactFormat(): Format;
-      def getPrettyFormat(): Format;
-      def getRawFormat(): Format;
-      def parse(xml: String): Document;
-    }
+  //  trait Format extends js.Object {
+  //    def format(document: Document): String;
+  //    def format(element: Element): String;
+  //    def setEncoding(encoding: String): Format;
+  //    def setIndent(indent: String): Format;
+  //    def setLineSeparator(separator: String): Format;
+  //    def setOmitDeclaration(omitDeclaration: Boolean): Format;
+  //    def setOmitEncoding(omitEncoding: Boolean): Format;
+  //  }
+  //  trait XmlService extends js.Object {
+  //    def createCdata(text: String): Cdata;
+  //    def createComment(text: String): Comment;
+  //    def createDocument(): Document;
+  //    def createDocument(rootElement: Element): Document;
+  //    def createElement(name: String): Element;
+  //    def createText(text: String): Text;
+  //    def getCompactFormat(): Format;
+  //    def getPrettyFormat(): Format;
+  //    def getRawFormat(): Format;
+  //    def parse(xml: String): Document;
+  //  }
 
-    trait Content extends js.Object {
-      def asCdata(): Cdata;
-      def asComment(): Comment;
-      // def asDocType(): DocType;
-      def asElement(): Element;
-      // def asEntityRef(): EntityRef;
-      // def asProcessingInstruction(): ProcessingInstruction;
-      def asText(): Text;
-      def detach(): Content;
-      def getParentElement(): Element;
-      // def getType(): ContentType;
-      def getValue(): String;
-    }
+  //  trait Content extends js.Object {
+  //    def asCdata(): Cdata;
+  //    def asComment(): Comment;
+  //    // def asDocType(): DocType;
+  //    def asElement(): Element;
+  //    // def asEntityRef(): EntityRef;
+  //    // def asProcessingInstruction(): ProcessingInstruction;
+  //    def asText(): Text;
+  //    def detach(): Content;
+  //    def getParentElement(): Element;
+  //    // def getType(): ContentType;
+  //    def getValue(): String;
+  //  }
 
-    trait Text extends Content {
-      def append(text: String): Text;
-      def detach(): Content;
-      def getParentElement(): Element;
-      def getText(): String;
-      def getValue(): String;
-      def setText(text: String): Text;
-    }
+  //  trait Text extends Content {
+  //    def append(text: String): Text;
+  //    def detach(): Content;
+  //    def getParentElement(): Element;
+  //    def getText(): String;
+  //    def getValue(): String;
+  //    def setText(text: String): Text;
+  //  }
 
-    /**
-      * A representation of an XML Comment node.
-      */
-    trait Comment extends Content {
-      def detach(): Content;
-      def getParentElement(): Element;
-      def getText(): String;
-      def getValue(): String;
-      def setText(text: String): Comment;
-    }
+  //  /**
+  //    * A representation of an XML Comment node.
+  //    */
+  //  trait Comment extends Content {
+  //    def detach(): Content;
+  //    def getParentElement(): Element;
+  //    def getText(): String;
+  //    def getValue(): String;
+  //    def setText(text: String): Comment;
+  //  }
 
-    trait Cdata extends Content {
-      def append(text: String): Text;
-      def detach(): Content;
-      def getParentElement(): Element;
-      def getText(): String;
-      def getValue(): String;
-      def setText(text: String): Text;
-    }
+  //  trait Cdata extends Content {
+  //    def append(text: String): Text;
+  //    def detach(): Content;
+  //    def getParentElement(): Element;
+  //    def getText(): String;
+  //    def getValue(): String;
+  //    def setText(text: String): Text;
+  //  }
 
-    trait Document extends js.Object {
-      def addContent(content: Content): Document;
-      def addContent(index: Integer, content: Content): Document;
-      def cloneContent(): js.Array[Content];
-      def detachRootElement(): Element;
-      def getAllContent(): js.Array[Content];
-      def getContent(index: Integer): Content;
-      def getContentSize(): Integer;
-      def getDescendants(): js.Array[Content];
-      def getRootElement(): Element;
-      def hasRootElement(): Boolean;
-      def removeContent(): js.Array[Content];
-      def removeContent(content: Content): Boolean;
-      def removeContent(index: Integer): Content;
-      def setRootElement(element: Element): Document;
-    }
+  //  trait Document extends js.Object {
+  //    def addContent(content: Content): Document;
+  //    def addContent(index: Integer, content: Content): Document;
+  //    def cloneContent(): js.Array[Content];
+  //    def detachRootElement(): Element;
+  //    def getAllContent(): js.Array[Content];
+  //    def getContent(index: Integer): Content;
+  //    def getContentSize(): Integer;
+  //    def getDescendants(): js.Array[Content];
+  //    def getRootElement(): Element;
+  //    def hasRootElement(): Boolean;
+  //    def removeContent(): js.Array[Content];
+  //    def removeContent(content: Content): Boolean;
+  //    def removeContent(index: Integer): Content;
+  //    def setRootElement(element: Element): Document;
+  //  }
 
-    trait Element extends Content {
-      def addContent(content: Content): Element;
-      def addContent(index: Integer, content: Content): Element;
-      def cloneContent(): js.Array[Content];
-      def detach(): Content;
-      def getAllContent(): js.Array[Content];
-      def getAttribute(name: String): Attribute;
-      def getAttributes(): js.Array[Attribute];
-      def getChild(name: String): Element;
-      def getChildText(name: String): String;
-      def getChildren(): js.Array[Element];
-      def getChildren(name: String): js.Array[Element];
-      def getContent(index: Integer): Content;
-      def getContentSize(): Integer;
-      def getDescendants(): js.Array[Content];
-      def getDocument(): Document;
-      def getName(): String;
-      def getParentElement(): Element;
-      def getQualifiedName(): String;
-      def getText(): String;
-      def getValue(): String;
-      def isAncestorOf(other: Element): Boolean;
-      def isRootElement(): Boolean;
-      def removeAttribute(attribute: Attribute): Boolean;
-      def removeAttribute(attributeName: String): Boolean;
-      def removeContent(): js.Array[Content];
-      def removeContent(content: Content): Boolean;
-      def removeContent(index: Integer): Content;
-      def setAttribute(attribute: Attribute): Element;
-      def setAttribute(name: String, value: String): Element;
-      def setName(name: String): Element;
-      def setText(text: String): Element;
-    }
+  //  trait Element extends Content {
+  //    def addContent(content: Content): Element;
+  //    def addContent(index: Integer, content: Content): Element;
+  //    def cloneContent(): js.Array[Content];
+  //    def detach(): Content;
+  //    def getAllContent(): js.Array[Content];
+  //    def getAttribute(name: String): Attribute;
+  //    def getAttributes(): js.Array[Attribute];
+  //    def getChild(name: String): Element;
+  //    def getChildText(name: String): String;
+  //    def getChildren(): js.Array[Element];
+  //    def getChildren(name: String): js.Array[Element];
+  //    def getContent(index: Integer): Content;
+  //    def getContentSize(): Integer;
+  //    def getDescendants(): js.Array[Content];
+  //    def getDocument(): Document;
+  //    def getName(): String;
+  //    def getParentElement(): Element;
+  //    def getQualifiedName(): String;
+  //    def getText(): String;
+  //    def getValue(): String;
+  //    def isAncestorOf(other: Element): Boolean;
+  //    def isRootElement(): Boolean;
+  //    def removeAttribute(attribute: Attribute): Boolean;
+  //    def removeAttribute(attributeName: String): Boolean;
+  //    def removeContent(): js.Array[Content];
+  //    def removeContent(content: Content): Boolean;
+  //    def removeContent(index: Integer): Content;
+  //    def setAttribute(attribute: Attribute): Element;
+  //    def setAttribute(name: String, value: String): Element;
+  //    def setName(name: String): Element;
+  //    def setText(text: String): Element;
+  //  }
 
-    @js.native
-    @JSGlobal
-    val XmlService: XmlService = js.native
-  }
+  //  @js.native
+  //  @JSGlobal
+  //  val XmlService: XmlService = js.native
+  // }
 
   @js.native
   trait Menu extends js.Object {
@@ -237,6 +240,7 @@ object googleappscript {
     def setCurrentCell(cell: Range): Range                                 = js.native
   }
 
+  @js.native
   trait RangeList extends js.Object {
     def activate(): RangeList;
     def breakApart(): RangeList;
@@ -257,10 +261,17 @@ object googleappscript {
     def uncheck(): RangeList;
   }
 
+  @js.native
   trait Range extends js.Object {
-    def activate(): Range;
+    def createDeveloperMetadataFinder(): DeveloperMetadataFinder = js.native
+    def addDeveloperMetadata(key: String): Range
+    def addDeveloperMetadata(key: String, visibility: DeveloperMetadataVisibility): Range
+    def addDeveloperMetadata(key: String, value: String): Range
+    def addDeveloperMetadata(key: String, value: String, visibility: DeveloperMetadataVisibility): Range
+    def setBackground(color: Null | String): Range;
+    def setBackgroundRGB(red: Integer, green: Integer, blue: Integer): Range;
+    def setBackgrounds(color: js.Array[js.Array[Null | String]]): Range;
     def activateAsCurrentCell(): Range;
-    def addDeveloperMetadata(key: String): Range;
     def breakApart(): Range;
     def canEdit(): Boolean;
     def check(): Range;
@@ -285,6 +296,8 @@ object googleappscript {
     def getFormula(): String;
     def getGridId(): Integer;
     def getHeight(): Integer;
+    def insertCheckboxes(checkedValue: js.Any): Range;
+    def insertCheckboxes(checkedValue: js.Any, uncheckedValue: js.Any): Range;
     def getHorizontalAlignment(): String;
     def getLastColumn(): Integer;
     def getLastRow(): Integer;
@@ -313,11 +326,12 @@ object googleappscript {
     def offset(rowOffset: Integer, columnOffset: Integer, numRows: Integer): Range;
     def offset(rowOffset: Integer, columnOffset: Integer, numRows: Integer, numColumns: Integer): Range;
     def setValues(values: js.Array[js.Array[js.Any]]): Range;
+    def getDisplayValues(): js.Array[js.Array[String]];
     def getValues(): js.Array[js.Array[js.Any]];
     def randomize(): Range;
     def removeCheckboxes(): Range;
+    def getBackgrounds(): js.Array[js.Array[String]];
     def removeDuplicates(): Range;
-    def setBackgroundRGB(red: Integer, green: Integer, blue: Integer): Range;
     def setFontSize(size: Integer): Range;
     def setFormula(formula: String): Range;
     def setFormulaR1C1(formula: String): Range;
@@ -334,6 +348,7 @@ object googleappscript {
     def uncheck(): Range;
   }
 
+  @js.native
   trait Spreadsheet extends js.Object {
     def addDeveloperMetadata(key: String): Spreadsheet;
     def addDeveloperMetadata(key: String, value: String): Spreadsheet;
@@ -354,6 +369,7 @@ object googleappscript {
     def getDataRange(): Range;
     def getFrozenColumns(): Integer;
     def getFrozenRows(): Integer;
+    def getSheets(): js.Array[Sheet];
     def getId(): String;
     def getLastColumn(): Integer;
     def getLastRow(): Integer;
@@ -422,13 +438,80 @@ object googleappscript {
     def unhideRow(row: Range): Unit;
   }
 
+  @js.native
   trait Selection extends js.Object {
     def getActiveRange(): js.UndefOr[Range];
     def getActiveSheet(): Sheet;
     def getCurrentCell(): js.UndefOr[Range];
   }
 
+  @js.native
+  trait DeveloperMetadata extends js.Object {
+    def getId(): Integer                                                          = js.native
+    def getKey(): String                                                          = js.native
+    def getLocation(): DeveloperMetadataLocation                                  = js.native
+    def getValue(): String | Null                                                 = js.native
+    def getVisibility(): DeveloperMetadataVisibility                              = js.native
+    def moveToColumn(column: Range): DeveloperMetadata                            = js.native
+    def moveToRow(row: Range): DeveloperMetadata                                  = js.native
+    def moveToSheet(sheet: Sheet): DeveloperMetadata                              = js.native
+    def moveToSpreadsheet(): DeveloperMetadata                                    = js.native
+    def remove(): Unit                                                            = js.native
+    def setKey(key: String): DeveloperMetadata                                    = js.native
+    def setValue(value: String): DeveloperMetadata                                = js.native
+    def setVisibility(visibility: DeveloperMetadataVisibility): DeveloperMetadata = js.native
+  }
+
+  @js.native
+  trait DeveloperMetadataFinder extends js.Object {
+    def find(): js.Array[DeveloperMetadata]                = js.native
+    def onIntersectingLocations(): DeveloperMetadataFinder = js.native
+    def withId(id: Integer): DeveloperMetadataFinder       = js.native
+    def withKey(key: String): DeveloperMetadataFinder      = js.native
+    def withLocationType(locationType: DeveloperMetadataLocationType): DeveloperMetadataFinder =
+      js.native
+    def withValue(value: String): DeveloperMetadataFinder                                = js.native
+    def withVisibility(visibility: DeveloperMetadataVisibility): DeveloperMetadataFinder = js.native
+  }
+
+  @js.native
+  trait DeveloperMetadataLocation extends js.Object {
+    def getColumn(): Range | Null                        = js.native
+    def getLocationType(): DeveloperMetadataLocationType = js.native
+    def getRow(): Range | Null                           = js.native
+    def getSheet(): Sheet | Null                         = js.native
+    def getSpreadsheet(): Spreadsheet | Null             = js.native
+  }
+
+  @js.native
+  sealed trait DeveloperMetadataLocationType extends js.Object {}
+
+  @js.native
+  @JSGlobal("mypkg.googleappscript.DeveloperMetadataLocationType")
+  object DeveloperMetadataLocationType extends js.Object {
+    var SPREADSHEET: DeveloperMetadataLocationType = js.native
+    var SHEET: DeveloperMetadataLocationType       = js.native
+    var ROW: DeveloperMetadataLocationType         = js.native
+    var COLUMN: DeveloperMetadataLocationType      = js.native
+    @JSBracketAccess
+    def apply(value: DeveloperMetadataLocationType): String = js.native
+  }
+
+  @js.native
+  sealed trait DeveloperMetadataVisibility extends js.Object {}
+
+  @js.native
+  @JSGlobal("mypkg.googleappscript.DeveloperMetadataVisibility")
+  object DeveloperMetadataVisibility extends js.Object {
+    var DOCUMENT: DeveloperMetadataVisibility = js.native
+    var PROJECT: DeveloperMetadataVisibility  = js.native
+    @JSBracketAccess
+    def apply(value: DeveloperMetadataVisibility): String = js.native
+  }
+
+  @js.native
   trait Sheet extends js.Object {
+    def createDeveloperMetadataFinder(): DeveloperMetadataFinder;
     def getActiveRangeList(): js.UndefOr[RangeList];
     def getRangeList(a1Notations: js.Array[String]): RangeList;
     def setActiveRangeList(rangeList: RangeList): RangeList;

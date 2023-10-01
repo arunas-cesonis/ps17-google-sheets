@@ -1,4 +1,11 @@
-import Main.Result
+package mypkg
+
+import mypkg.Result.Result
+import mypkg.Utils.fromOption
+import mypkg.googleappscript.UrlFetchApp
+
+import scala.scalajs.js
+import scala.scalajs.js.UndefOr
 
 trait Http {
   def request(
@@ -17,9 +24,49 @@ object Http {
     case object Put extends Method
     case object Get extends Method
   }
+  private def makeUrl(host: String, path: String, queryParams: Map[String, String]): String = {
+    import scala.scalajs.js.URIUtils.encodeURIComponent
+    host + "/" + path + "?" + queryParams
+      .map(pair => encodeURIComponent(pair._1) + "=" + encodeURIComponent(pair._2))
+      .mkString("&")
+  }
+
+  def implNodeSyncRequest: Http = new Http {
+    override def request(
+      method: Method,
+      host: String,
+      path: String,
+      queryParams: Map[String, String],
+      bodyOption: Option[String]
+    ): Result[String] = {
+      import scalajs.js.Dynamic.{global => g}
+      val url     = makeUrl(host, path, queryParams)
+      val request = g.require("sync-request");
+      trait Options extends js.Object {
+        val body: js.UndefOr[String]
+      }
+      println(s"${method.productPrefix} ${url}")
+      method match {
+        case Method.Put =>
+          val res = request(
+            "PUT",
+            url,
+            new Options {
+              override val body: UndefOr[String] = fromOption(bodyOption)
+            }
+          )
+          Result.ok(res.getBody().toString)
+        case Method.Get =>
+          val res = request("GET", url)
+          Result.ok(res.getBody().toString)
+
+      }
+    }
+  }
 
   def implAppScript: Http = new Http {
-    import scala.scalajs.js.URIUtils.encodeURIComponent
+    import googleappscript.URLFetchRequestOptions
+
     override def request(
       method: Method,
       host: String,
@@ -27,32 +74,31 @@ object Http {
       queryParams: Map[String, String],
       body: Option[String]
     ): Result[String] = {
-      val url = host + "/" + path + "?" + queryParams
-        .map(pair => encodeURIComponent(pair._1) + "=" + encodeURIComponent(pair._2))
-        .mkString("&")
+      val url = makeUrl(host, path, queryParams)
       val resp = {
         val options = method match {
-          case HTTPMethod.Put =>
+          case Method.Put =>
             new URLFetchRequestOptions {
               override val method: js.UndefOr[String]           = "PUT"
               override val muteHttpExceptions: UndefOr[Boolean] = true
               override val contentType: UndefOr[String]         = "text/xml"
               override val payload: UndefOr[String]             = fromOption(body)
             }
-          case HTTPMethod.Get =>
+          case Method.Get =>
             new URLFetchRequestOptions {
               override val method: js.UndefOr[String]           = "GET"
               override val muteHttpExceptions: UndefOr[Boolean] = true
             }
         }
-        log(s"${options.method} ${url}")
+        Utils.log(s"${options.method} ${url}")
         UrlFetchApp.fetch(url, options)
       }
       if (resp.getResponseCode() / 100 != 2) {
-        log(resp.getContentText())
-        fail(s"http code ${resp.getResponseCode()}")
+        val errorMsg = s"http code ${resp.getResponseCode()}:\n${resp.getContentText()}"
+        Utils.log(errorMsg)
+        Result.fail(errorMsg)
       } else {
-        ok(resp.getContentText())
+        Result.ok(resp.getContentText())
       }
     }
   }
