@@ -4,7 +4,7 @@ import mypkg.Result.{ensuring, partialOr, Result}
 import mypkg.Schema.Field
 import mypkg.Xml.{Document, Element}
 
-case class Schema(resourceName: String, itemName: String, fields: List[Field]) {
+case class Schema(resource: String, itemName: String, fields: List[Field]) {
   def getWritableFieldsWithId: List[Field] =
     fields.filter(f => f.name == "id" || !f.readOnly)
 }
@@ -14,9 +14,8 @@ object Schema {
   case class Field(name: String, readOnly: Boolean, format: String)
   object Field {
     val id: Field = Field("id", readOnly = true, format = "isUnsignedId")
-
   }
-  def from(doc: Document): Result[Schema] =
+  def from(resource: String, doc: Document): Result[Schema] = {
     for {
       root <- ensuring[Element](doc.root)(
         _.name == "prestashop",
@@ -33,7 +32,8 @@ object Schema {
             format <- item.getAttribute("format")
           } yield Field(item.name, readOnly = readOnly, format = format)
         }
-    } yield Schema(items.name, items.children.head.name, List(Field.id).appendedAll(fields))
+    } yield Schema(resource, items.name, List(Field.id).appendedAll(fields))
+  }
 
   def from(resource: Resource, doc: Document): Result[Schema] =
     for {
@@ -52,5 +52,5 @@ object Schema {
             format <- item.getAttribute("format")
           } yield Field(item.name, readOnly = readOnly, format = format)
         }
-    } yield Schema(items.name, items.children.head.name,  List(Field.id).appendedAll(fields))
+    } yield Schema(items.name, items.children.head.name, List(Field.id).appendedAll(fields))
 }

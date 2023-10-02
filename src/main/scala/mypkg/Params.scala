@@ -53,6 +53,11 @@ object Params {
       Map("ws_key" -> key)
   }
 
+  case class Limit(value: Int) extends ToParams {
+    def toParams: Map[String, String] =
+      Map("limit" -> value.toString)
+  }
+
   case class OrFilter(field: String, values: List[String]) extends ToParams {
     def toParams: Map[String, String] =
       Map(s"filter[${field}]" -> values.mkString("[", "|", "]"))

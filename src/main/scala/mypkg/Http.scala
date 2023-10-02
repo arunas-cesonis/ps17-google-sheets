@@ -26,7 +26,8 @@ object Http {
   }
   private def makeUrl(host: String, path: String, queryParams: Map[String, String]): String = {
     import scala.scalajs.js.URIUtils.encodeURIComponent
-    host + "/" + path + "?" + queryParams
+    val sep = if (path.startsWith("/")) { "" } else { "/" }
+    host + sep + path + "?" + queryParams
       .map(pair => encodeURIComponent(pair._1) + "=" + encodeURIComponent(pair._2))
       .mkString("&")
   }
@@ -90,7 +91,7 @@ object Http {
               override val muteHttpExceptions: UndefOr[Boolean] = true
             }
         }
-        Utils.log(s"${options.method} ${url}")
+        Utils.log(s"${options.method.toString.toUpperCase} ${url}")
         UrlFetchApp.fetch(url, options)
       }
       if (resp.getResponseCode() / 100 != 2) {

@@ -15,13 +15,6 @@ object Xml {
       .replace("\"", "&quot;")
       .replace("'", "&apos;")
 
-  def testRoundTrip(file: String): Unit = {
-    val doc  = Xml.parse(Utils.readFile(file))
-    val tmp  = doc.print
-    val doc2 = Xml.parse(tmp)
-    assert(Xml.Document.documentEq.eqv(doc, doc2))
-  }
-
   case class Document(root: Element) {
     def print: String = {
       val sb    = new StringBuilder()
@@ -61,7 +54,7 @@ object Xml {
       case cd: Cdata => cd.s
     }.mkString
 
-    def getChild(name:String): Option[Element] = content.collectFirst {
+    def getChild(name: String): Option[Element] = content.collectFirst {
       case e: Element if e.name == name => e
     }
 
@@ -69,6 +62,15 @@ object Xml {
 
     def getChildren(name: String): js.Array[Element] = content.collect {
       case e: Element if e.name == name => e
+    }
+    def findMapElement[A](f: Element => Option[A]): Option[A] = {
+      def go(e: Element): Option[A] =
+        f(e).orElse(
+          e.children.collectFirst { case e: Element =>
+            go(e)
+          }.flatten
+        )
+      go(this)
     }
 
     def children: Iterable[Element] = content.collect { case e: Element =>

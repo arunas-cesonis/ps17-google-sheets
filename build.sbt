@@ -19,6 +19,7 @@ lazy val root = (project in file("."))
     name                                    := "ps17-google-sheets-appscript",
     libraryDependencies += "org.typelevel" %%% "cats-core" % "2.9.0",
     libraryDependencies += "com.lihaoyi"   %%% "utest"     % "0.8.1" % "test",
+    libraryDependencies += "com.lihaoyi" %%% "pprint" % "0.7.0",
     // libraryDependencies += "com.lihaoyi" %%% "fastparse" % "3.0.2",
     // libraryDependencies ++= Seq(
     //  "io.circe" %%% "circe-core",

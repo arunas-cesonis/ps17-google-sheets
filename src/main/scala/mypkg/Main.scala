@@ -12,7 +12,7 @@ import cats.implicits.toTraverseOps
 import mypkg.Params.{Display, OrFilter}
 import mypkg.Table.Column
 import mypkg.Xml
-import mypkg.Xml.{Cdata, Content, Document, Element, parse}
+import mypkg.Xml.{parse, Cdata, Content, Document, Element}
 
 import scala.scalajs.js.annotation.{JSExportTopLevel, JSGlobal}
 
@@ -35,7 +35,6 @@ object Main {
       .map(Xml.parse)
   }
 
-
   def fetchTable(resource: Resource, params: Params): Result[(Schema, Table)] =
     for {
       schema <- get(resource, Params.empty.add(Params.Schema.Synopsis)).flatMap(Schema.from(resource, _))
@@ -45,7 +44,6 @@ object Main {
       table <- Table.from(resource, xml)
       _ = log("a5")
     } yield (schema, table)
-
 
   def writeTableValues(schema: Schema, t: Table, cursor: googleappscript.Range): Unit = {
     val values = t.toValues
@@ -132,7 +130,7 @@ object Main {
     t.columns
       .find(_.name == "id")
       .toRight(error("clould not find 'id' column"))
-      .flatMap(_.data.toList.customTraverseList(x => stringToInt(x.toString)))
+      .flatMap(_.data.toList.traverse(x => stringToInt(x.toString)))
 
   @JSExportTopLevel("deploy_deleteOtherSheets")
   def deleteOtherSheets(): Unit = {
