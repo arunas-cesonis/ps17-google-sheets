@@ -9,20 +9,8 @@ import scala.scalajs.js
 
 object Utils {
 
-  object implicits {
-
-    // implicit class TraverseList[A](list: List[A]) {
-    //  def customTraverseList[B](f: A => Result[B]): Result[List[B]] = {
-    //    val lb = ListBuffer.empty[B]
-    //    for (a <- list)
-    //      f(a) match {
-    //        case Right(value) => lb.addOne(value)
-    //        case Left(err) => return Left(err)
-    //      }
-    //    Right(lb.toList)
-    //  }
-    // }
-  }
+  def pp(a: Any*): Unit =
+    a.foreach(x => pprint.pprintln(x))
 
   def fromOption[A](a: Option[A]): js.UndefOr[A] =
     a match {
@@ -88,4 +76,27 @@ object Utils {
   }
 
   def listToArray[A](s: List[A]): js.Array[A] = js.Array(s: _*)
+
+  def renderTable(table: Array[Array[String]]): String = {
+    val vsep      = "| "
+    val maxWidths = Array.fill[Int](table(0).length)(0)
+    for (row <- table)
+      for ((value, i) <- row.zipWithIndex) {
+        val width = value.length
+        if (width > maxWidths(i)) {
+          maxWidths(i) = width
+        }
+      }
+    val sb = new StringBuilder()
+    for (row <- table) {
+      for ((value, width) <- row.zip(maxWidths)) {
+        val pad = width - value.length
+        sb.addAll(vsep)
+        sb.addAll(" " * pad)
+        sb.addAll(value)
+      }
+      sb.addOne('\n')
+    }
+    sb.toString()
+  }
 }

@@ -2,9 +2,10 @@ package mypkg
 
 import cats.Eq
 import cats.implicits.catsSyntaxEq
+import mypkg.Result.Result
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.{JSGlobal, JSImport}
+import scala.scalajs.js.annotation.{JSImport}
 
 object Xml {
   private def escapeString(str: String): String =
@@ -49,31 +50,51 @@ object Xml {
   case class Chars(s: String) extends Content
   case class Cdata(s: String) extends Content
   case class Element(name: String, attributes: js.Array[(String, String)], content: js.Array[Content]) extends Content {
+    def debug: String = {
+      def go(e: Element, path: List[String]): List[String] =
+        List(
+          path.mkString(".") + " " + e.name + " " + e.attributes.map(kv => kv._1 + "=" + kv._2).mkString(" ")
+        ) ++ e.elements.flatMap(x => go(x, path :+ e.name))
+      go(this, Nil).mkString("\n")
+    }
     def text: String = content.collect {
       case c: Chars  => c.s
       case cd: Cdata => cd.s
     }.mkString
 
-    def getChild(name: String): Option[Element] = content.collectFirst {
+    def getElementR(name: String): Result[Element] =
+      getElement(name).toRight(Result.error(s"element '${name}' not found"))
+
+    def getElement(name: String): Option[Element] = content.collectFirst {
       case e: Element if e.name == name => e
+    }
+
+    def singleElement: Option[Element] = elements.toList match {
+      case single :: Nil => Some(single)
+      case _             => None
+    }
+
+    def singleElementByName(name: String): Option[Element] = elements.toList.filter(_.name == name) match {
+      case single :: Nil => Some(single)
+      case _             => None
     }
 
     def getAttribute(name: String): Option[String] = attributes.find(_._1 == name).map(_._2)
 
-    def getChildren(name: String): js.Array[Element] = content.collect {
+    def getElements(name: String): js.Array[Element] = content.collect {
       case e: Element if e.name == name => e
     }
     def findMapElement[A](f: Element => Option[A]): Option[A] = {
       def go(e: Element): Option[A] =
         f(e).orElse(
-          e.children.collectFirst { case e: Element =>
+          e.elements.collectFirst { case e: Element =>
             go(e)
           }.flatten
         )
       go(this)
     }
 
-    def children: Iterable[Element] = content.collect { case e: Element =>
+    def elements: Iterable[Element] = content.collect { case e: Element =>
       e
     }
   }

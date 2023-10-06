@@ -1,24 +1,18 @@
 package mypkg
 
-import mypkg.googleappscript.{Browser, SpreadsheetApp, URLFetchRequestOptions, UrlFetchApp}
-
-import scala.collection.mutable.ListBuffer
-import scala.scalajs.js
-import scala.scalajs.js.URIUtils.encodeURIComponent
-import scala.scalajs.js.{Date, JSON, UndefOr}
-import Result._
-import Utils._
 import cats.implicits.toTraverseOps
-import mypkg.Params.{Display, OrFilter}
+import mypkg.Result._
 import mypkg.Table.Column
-import mypkg.Xml
-import mypkg.Xml.{parse, Cdata, Content, Document, Element}
+import mypkg.Utils._
+import mypkg.Xml.Document
+import mypkg.googleappscript.{Browser, SpreadsheetApp}
 
-import scala.scalajs.js.annotation.{JSExportTopLevel, JSGlobal}
+import scala.scalajs.js
+import scala.scalajs.js.Date
+import scala.scalajs.js.annotation.JSExportTopLevel
 
 object Main {
   private val http = Http.implAppScript
-  import Utils.implicits._
 
   def put(resource: Resource, params: Params, body: Document): Result[Document] = {
     val params2    = Map("ws_key" -> Config.key) ++ params.map

@@ -100,9 +100,9 @@ object Table {
     val records =
       Utils.time("getChildren")(
         xml.root
-          .getChild(resource.name)
+          .getElement(resource.name)
           .toRight(error("document does not match resource"))
-          .map(_.getChildren(resource.itemName))
+          .map(_.getElements(resource.itemName))
       )
     for {
       r <- records
@@ -112,7 +112,7 @@ object Table {
   }
 
   private def fieldNames(a: js.Array[Element]): Option[js.Array[String]] =
-    a.headOption.map(s => js.Array(s.children.map(_.name).toList: _*))
+    a.headOption.map(s => js.Array(s.elements.map(_.name).toList: _*))
 
   def makeColumns(resource: Resource, records: js.Array[Element]): Option[js.Array[Column]] =
     fieldNames(records).map { names =>
@@ -122,11 +122,11 @@ object Table {
   def fillColumns(columns: js.Array[Column], records: js.Array[Element]): Unit =
     time("fill columns") {
       records.zipWithIndex.foreach { case (el, i) =>
-        val rec = el.children.map(c => c.name -> c).toMap
+        val rec = el.elements.map(c => c.name -> c).toMap
         columns
           .foreach { col =>
             val valueElement = rec(col.name)
-            val language = valueElement.children.filter(_.name == "language")
+            val language = valueElement.elements.filter(_.name == "language")
             val value = language.headOption match {
               case Some(value) => value.text
               case None => valueElement.text

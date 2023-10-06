@@ -1,14 +1,12 @@
 import cats.implicits.toTraverseOps
-import mypkg.{Config, Http, Params, Resource, Result, Schema, Values, Xml}
 import mypkg.Http.Method
-import mypkg.Result.Result
+import mypkg.Result.{error, Result}
+import mypkg.Utils.{pp, writeFile}
 import mypkg.Xml.{Cdata, Document, Element}
+import mypkg._
 import utest.{test, TestSuite, Tests}
 
-import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
-import java.nio.channels.Channels
-import java.util.UUID
-import scala.annotation.tailrec
+import scala.collection.mutable
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport
 
@@ -20,6 +18,15 @@ object WebServiceTest extends TestSuite {
 
   val tests: Tests = Tests {
     val http = Http.implNodeSyncRequest
+
+    def fetchResourceSchema1(resource: String): Result[Document] = {
+      val params = Params.empty
+        .add(Params.WsKey(config.key))
+        .add(Params.Schema.Synopsis)
+      val resp = http.request(Method.Get, config.host, s"/api/${resource}", params.map, None).toTry.get
+      val data = Xml.parse(resp)
+      Result.ok(data)
+    }
 
     def fetchResourceSchema(resource: String): Result[Schema] = {
       val params = Params.empty
@@ -63,20 +70,117 @@ object WebServiceTest extends TestSuite {
       Document(root)
     }
 
+    def xmlToHeader(schema: Schema, doc: Document): Values = {
+      val row: js.Array[js.Any] = js.Array(schema.getWritableFieldsWithId.map(_.name).map(js.Any.fromString): _*)
+      val rows                  = js.Array(row)
+      Values(rows)
+    }
+
+    def singleElement(e: Element): Result[Element] =
+      e.singleElement.toRight {
+        val s     = e.elements.toList
+        val names = s.map(_.name).distinct.take(5)
+        Result.error(s"expected single element, found ${s.length}, first 5 distinct names: ${names}")
+      }
+
+    def singleByName(e: Element, name: String): Result[Element] =
+      e.singleElementByName(name).toRight {
+        val s     = e.elements.toList
+        val names = s.map(_.name).distinct
+        Result.error(s"expected single element named '${name}', found ${s.length}, first 5 distinct names: ${names}")
+      }
+
+    def xmlToAssocationsValues(schema: Schema, doc: Document): Result[List[(String, Values)]] = {
+      val assoc = doc.root.singleElement.toList
+        .flatMap(_.elements)
+        .flatMap { item =>
+          val id    = item.singleElementByName("id").get.text
+          val assoc = item.singleElementByName("associations").get
+          val tmp = schema.associations.map { a =>
+            val rows = assoc.getElement(a.name).get
+            a.name -> (rows
+              .getElements(a.nodeType)
+              .map { row =>
+                id :: a.fields.map(f => row.singleElementByName(f.name).get.text)
+              }
+              .toList)
+          }
+          tmp
+        }
+      val r = assoc
+        .groupMapReduce(_._1)(_._2)(_ ++ _)
+        .view
+        .map { case (name, rows) =>
+          val header = s"__${schema.itemName}_id__" :: schema.associations.find(_.name == name).get.fields.map(_.name)
+          val values = Values.from(header :: rows)
+          name -> values
+        }
+        .toList
+      Result.ok(r)
+    }
+
+    def xmlToAssocationsValuesOpt(schema: Schema, doc: Document): Result[Option[List[(String, Values)]]] =
+      if (schema.associations.nonEmpty) {
+        xmlToAssocationsValues(schema, doc).map(Some(_))
+      } else {
+        Result.ok(None)
+      }
+
+    def showTable(t: Vec.Table): String = {
+      val header = t.columns.map(_._1).toArray
+      val body   = t.columns.map(_._2.toStringArray).toArray.transpose
+      val table  = header :: body.toList
+      Utils.renderTable(table.toArray)
+    }
+
+    def xmlToTable(schema: Schema, doc: Document): Result[Vec.Table] = {
+      val builders = schema.fields.map { f =>
+        f.name -> Vector.newBuilder[String]
+      }
+      val items = doc.root
+        .singleElementByName(schema.resource)
+        .map(_.getElements(schema.itemName))
+        .getOrElse(doc.root.getElements(schema.itemName))
+      for {
+        _ <- items.toList.traverse { el =>
+          builders.traverse { case (name, builder) =>
+            el.getElementR(name).map(e => builder.addOne(e.text))
+          }
+        }
+      } yield Vec.Table.from(builders.map(pair => pair._1 -> Vec.Dyn.String(Vec.from(pair._2.result()))))
+    }
+
+    def tableToXml(schema: Schema, table: Vec.Table): Result[Document] =
+      table.columns
+        .traverse { case (name, v) =>
+          // only for verification
+          schema.fields
+            .find(_.name == name)
+            .toRight(Result.error(s"field '${name}' not found in schema"))
+            .map(_ => name -> v)
+        }
+        .map { columns =>
+          val names   = columns.map(_._1).toArray
+          val seqs    = columns.map(pair => pair._1 -> pair._2.toIndexedSeq)
+          val numRows = seqs.head._2.length
+          val items   = Element.create(schema.resource)
+          for (row <- (0 until numRows)) {
+            val item = Element.create(schema.itemName)
+            for ((name, values) <- seqs) {
+              val el = Element.create(name)
+              el.content.push(Cdata(values(row)))
+              item.content.push(el)
+            }
+            items.content.push(item)
+          }
+          Document(items)
+        }
+
     def xmlToValues(schema: Schema, doc: Document): Values = {
+      val table  = xmlToTable(schema, doc).toTry.get
       val fields = schema.getWritableFieldsWithId
-      // def findAndRemove[A](a: A, s: List[A]): Option[(A, List[A])] = {
-      //  @tailrec
-      //  def go(acc: List[A], rem: List[A]): Option[(A, List[A])] =
-      //    rem match {
-      //      case h :: t if a == h => Some((a, acc ++ t))
-      //      case h :: t           => go(h :: acc, t)
-      //      case Nil              => None
-      //    }
-      //  go(Nil, s)
-      // } val rows = js.Array[js.Array[js.Any]]()
       val items = doc.root.findMapElement { e =>
-        val items = e.getChildren(schema.itemName)
+        val items = e.getElements(schema.itemName)
         Option.when(items.nonEmpty)(items)
       }
       val values = Values.create
@@ -84,11 +188,11 @@ object WebServiceTest extends TestSuite {
         val row: js.Array[js.Any] = js.Array()
         fields.foreach { f =>
           row.push(
-            recEl.children
+            recEl.elements
               .find(_.name == f.name)
               .ensuring(
                 _.isDefined,
-                s"xmlToValues: field ${f.name} not found in ${recEl.children.map(_.name).toList.sorted.mkString("\n")}"
+                s"xmlToValues: field ${f.name} not found in ${recEl.elements.map(_.name).toList.sorted.mkString("\n")}"
               )
               .get
               .text
@@ -122,42 +226,58 @@ object WebServiceTest extends TestSuite {
           x.length == y.length && x.zip(y).forall(p => p._1.toString == p._2.toString)
         }
 
-    def roundtripResource(resource: String): Result[Unit] =
-      for {
-        schema <- fetchResourceSchema(resource)
-        doc1   <- fetchResource(resource)
-        doc2   <- fetchResource(resource)
-        values1  = xmlToValues(schema, doc1)
-        values2  = xmlToValues(schema, doc2)
-        values11 = xmlToValues(schema, valuesToXml(schema, values1))
-        values22 = xmlToValues(schema, valuesToXml(schema, values2))
-        _        = assert(sameValues(values1, values2), "sanity check")
-        _        = assert(sameValues(values1, values11), "xml <> values roundtrip")
-        _        = assert(sameValues(values2, values22), "xml <> values roundtrip")
-        doc3 <- sendResource(resource, valuesToXml(schema, values1))
-        values3  = xmlToValues(schema, doc3)
-        dc       = columnDiffCounts(schema, values1, values3)
-        expected = schema.fields.find(_.name == "date_upd").map(f => (values1.rows.length, f.name)).toList
-        _        = assert(dc == expected, s"expected only date_upd to be different: ${dc}")
-      } yield ()
-
     def getAvailableResources: Result[List[String]] = {
       val params = Params.empty
         .add(Params.WsKey(config.key))
         .add(Params.Schema.Synopsis)
       val resp = http.request(Method.Get, config.host, "/api", params.map, None).toTry.get
       val doc  = Xml.parse(resp)
-      Result.ok(doc.root.getChild("api").get.children.map(_.name).toList)
+      Result.ok(doc.root.getElement("api").get.elements.map(_.name).toList)
     }
 
-    test("roundtripResource") {
-      val result = for {
-        availableResources <- getAvailableResources
-        pairs              <- availableResources.traverse(roundtripResource)
-      } yield ()
-      val () = result.toTry.get
-      // roundtripResource(Resource.products)
+    def xtest(name: String)(f: => Unit): Unit =
+      println(s"ignoring test ${name}")
+
+    def assertRoundTripTableToXml(schema: Schema, doc: Document): Result[Vec.Table] =
+      for {
+        t    <- xmlToTable(schema, doc)
+        doc2 <- tableToXml(schema, t)
+        t2   <- xmlToTable(schema, doc2)
+        _ = assert(t == t2)
+        _ = assert(showTable(t) == showTable(t2))
+      } yield t
+
+    test("Vec.Table") {
+      val xml =
+        """
+          <resource>
+            <item><a>1</a><b>2</b></item>
+            <item><a>2</a><b>3</b></item>
+            <item><a>3</a><b>4</b></item>
+          </resource>
+          """
+      val schema = Schema(
+        "resource",
+        "item",
+        List(Schema.Field("a", readOnly = false, "format"), Schema.Field("b", readOnly = false, "format")),
+        Nil
+      )
+      assertRoundTripTableToXml(schema, Xml.parse(xml))
     }
+
+    test("fetch") {
+      (for {
+        resources <- getAvailableResources
+        schemas   <- resources.traverse(fetchResourceSchema)
+        docs      <- resources.traverse(fetchResource)
+        tables    <- docs.zip(schemas).traverse(a => assertRoundTripTableToXml(a._2, a._1))
+        toSend    <- tables.zip(schemas).traverse(a => tableToXml(a._2, a._1))
+        _         <- toSend.zip(schemas).traverse(a => sendResource(a._2.resource, a._1))
+        // _         <- docs.zip(schemas).traverse(a => xmlToTable(a._2, a._1))
+      } yield ()).toTry.get
+
+    }
+
   }
 
 }
