@@ -63,6 +63,11 @@ object Params {
       Map(s"filter[${field}]" -> values.mkString("[", "|", "]"))
   }
 
+  case class Language(id: Int) extends ToParams {
+    def toParams: Map[String, String] =
+      Map(s"language" -> id.toString)
+  }
+
   sealed trait DateFilter extends Product with Serializable with ToParams {
     self =>
     def toParams: Map[String, String] =

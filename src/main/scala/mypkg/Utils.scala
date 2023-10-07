@@ -21,8 +21,9 @@ object Utils {
   def log1(arg: Any): Unit =
     log(arg)
 
-  def log(args: Any*): Unit =
-    Logger.log(
+  def log(args: Any*): Unit = {
+    println(
+    //Logger.log(
       args.toList
         .map(x =>
           (if (x == null) {
@@ -33,6 +34,7 @@ object Utils {
         )
         .mkString(" ")
     )
+  }
 
   def time[A](title: String)(f: => A): A = {
     val start   = System.nanoTime()

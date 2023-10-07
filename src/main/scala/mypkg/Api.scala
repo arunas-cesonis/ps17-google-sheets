@@ -21,6 +21,7 @@ object Api {
         val params = Params.empty
           .add(Params.WsKey(config.key))
           .add(Params.Schema.Synopsis)
+          .add(Params.Language(Data.languageId))
         val resp = http.request(Method.Get, config.host, "/api", params.map, None).toTry.get
         val doc  = Xml.parse(resp)
         Result.ok(doc.root.getElement("api").get.elements.map(_.name).toList)
@@ -31,6 +32,7 @@ object Api {
         val params = Params.empty
           .add(Params.WsKey(config.key))
           .add(Params.Schema.Synopsis)
+          .add(Params.Language(Data.languageId))
         log(s"fetchResourceSchema($resource): http.request")
         val resp = http.request(Method.Get, config.host, s"/api/${resource}", params.map, None).toTry.get
         log(s"fetchResourceSchema($resource): Xml.parse")
@@ -43,7 +45,7 @@ object Api {
         val params = Params.empty
           .add(Params.WsKey(config.key))
           .add(Params.Display.Full)
-          .add(Params.Limit(5))
+          .add(Params.Language(Data.languageId))
         val resp = http.request(Method.Get, config.host, s"/api/${resource}", params.map, None).toTry.get
         val data = Xml.parse(resp)
         Result.ok(data)
@@ -52,6 +54,7 @@ object Api {
       override def sendResource(resource: String, doc: Document): Result[Document] = {
         val params = Params.empty
           .add(Params.WsKey(config.key))
+          .add(Params.Language(Data.languageId))
           .add(Params.Display.Full)
         val resp = http.request(Method.Put, config.host, s"/api/${resource}", params.map, Some(doc.print)).toTry.get
         val data = Xml.parse(resp)

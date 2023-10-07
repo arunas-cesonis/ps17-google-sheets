@@ -28,9 +28,9 @@ object Schema {
 
   case class Association(name: String, nodeType: String, fields: List[AssociationField])
   case class AssociationField(name: String)
-  case class Field(name: String, readOnly: Boolean, format: String)
+  case class Field(name: String, readOnly: Boolean, format: String, multilingual: Boolean)
   object Field {
-    val id: Field = Field("id", readOnly = true, format = "isUnsignedId")
+    val id: Field = Field("id", readOnly = true, format = "isUnsignedId", multilingual = false)
   }
 
   def parseAssociation(e: Element): Option[Association] = {
@@ -50,10 +50,11 @@ object Schema {
   def parseFields(e: Iterable[Element]): List[Field] =
     e.toList
       .flatMap { item =>
-        val readOnly = item.getAttribute("read_only").contains("true")
+        val readOnly     = item.getAttribute("read_only").contains("true")
+        val multilingual = item.getElement("language").isDefined
         item.getAttribute("format") match {
           case Some(format) =>
-            Some(Field(item.name, readOnly = readOnly, format = format))
+            Some(Field(item.name, readOnly = readOnly, format = format, multilingual = multilingual))
           case None =>
             None
         }
