@@ -9,5 +9,5 @@ Status
 - [ ] Send updates to associated fields of PS1.7 resources
 - [X] Display received resource in spreadsheet
 - [X] Read resource from spreadsheet into sendable format
-- [ ] Allow user to fecth any available resource for owned API key
+- [ ] Allow user to fetch any available resource for owned API key
 - [ ] Allow user to update any available resource for owned API key
