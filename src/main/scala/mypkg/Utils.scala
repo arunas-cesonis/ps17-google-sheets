@@ -99,4 +99,11 @@ object Utils {
     }
     sb.toString()
   }
+
+  def renderTable(t: Vec.Table): String = {
+    val header = t.columns.map(_._1).toArray
+    val body   = t.columns.map(_._2.toStringArray).toArray.transpose
+    val table  = header :: body.toList
+    Utils.renderTable(table.toArray)
+  }
 }

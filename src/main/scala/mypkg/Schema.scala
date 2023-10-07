@@ -75,22 +75,4 @@ object Schema {
       fields = parseFields(items.elements)
     } yield Schema(resource, items.name, List(Field.id).appendedAll(fields), assoctiations)
 
-  def from(resource: Resource, doc: Document): Result[Schema] =
-    for {
-      root <- ensuring[Element](doc.root)(
-        _.name == "prestashop",
-        "expected 'prestashop' root element"
-      )
-      items <-
-        root
-          .getElement(resource.itemName)
-          .toRight(Result.error(s"expected element '${resource.itemName}' not found"))
-      fields = items.elements.toList
-        .flatMap { item =>
-          val readOnly = item.getAttribute("read_only").contains("true")
-          for {
-            format <- item.getAttribute("format")
-          } yield Field(item.name, readOnly = readOnly, format = format)
-        }
-    } yield Schema(items.name, items.elements.head.name, List(Field.id).appendedAll(fields), Nil)
 }
