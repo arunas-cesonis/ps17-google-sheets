@@ -10,4 +10,4 @@ Status
 - [X] Display received resource in spreadsheet
 - [X] Read resource from spreadsheet into sendable format
 - [X] Allow user to fetch any available resource
-- [~] Allow user to update any available resource
+- [ ] Allow user to update any available resource
